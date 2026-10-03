@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "BLOCKS Study Tracker"
+description = "A local-first study and revision planner for an ISC Class 12 student, with spaced chapter reviews, daily study blocks, marks tracking, practical checklists, and an editable exam plan."
+version = "1.0.0"
+id = "artifacts/blocks-study-tracker"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18318
+
+[services.development]
+run = "pnpm --filter @workspace/blocks-study-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/blocks-study-tracker", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/blocks-study-tracker/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18318"
+BASE_PATH = "/"
