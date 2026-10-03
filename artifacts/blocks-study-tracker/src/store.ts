@@ -4,6 +4,7 @@ import {addDays,buildRevisions,completeRevisionOn,todayISO} from './dates';
 import {scheduleBacklog} from './backlog';
 import {DEFAULT_EXAM_DATES,derivePhases} from './phases';
 import {PRACTICAL_STARTER,SEED_PENDING,SEED_SCORES} from './seed';
+import {pendingTopicKey} from './setup-pending';
 import type {BlockId,Chapter,DayLog,ErrorEntry,ErrorReason,ExamDates,MockPractical,PaperSlot,Pass,PendingTopic,PracticalItem,ScoreEntry,Settings,StudyMethod,StudySession,SubjectId,WeeklyReview} from './types';
 
 type State={
@@ -15,7 +16,7 @@ type State={
  saveReview:(r:WeeklyReview)=>void;toggleMilestone:(key:string)=>void;setExamDate:(key:ExamDatesConfirmed,date:string,confirmed:boolean)=>void;setExamDates:(d:ExamDates)=>void;
  addScore:(s:Omit<ScoreEntry,'id'>)=>void;deleteScore:(id:string)=>void;markPendingLearned:(id:string)=>void;setPendingDue:(id:string,due:string)=>void;addPending:(x:Omit<PendingTopic,'id'|'doneOn'>)=>void;
  addPaper:(p:Omit<PaperSlot,'id'>)=>void;removePaper:(id:string)=>void;togglePractical:(key:string)=>void;addPractical:(subject:SubjectId,text:string)=>void;editPractical:(id:string,text:string)=>void;deletePractical:(id:string)=>void;addMock:(m:Omit<MockPractical,'id'>)=>void;deleteMock:(id:string)=>void;
-  finishSetup:(finished:{subject:SubjectId;name:string}[])=>void;skipSetup:()=>void;exportAll:()=>string;importAll:(json:string)=>void;resetAll:()=>void;
+   finishSetup:(finished:{subject:SubjectId;name:string}[],pendingDraft:PendingTopic[])=>void;skipSetup:()=>void;exportAll:()=>string;importAll:(json:string)=>void;resetAll:()=>void;
 };
 type ExamDatesConfirmed='practicals'|'preBoards'|'boards';
 const emptyDay=(date:string):DayLog=>({date,blocksDone:{A:false,B:false,C:false},minimumDay:false,minimumDone:{maths:false,revision:false},focusMinutes:0});
@@ -47,7 +48,7 @@ export const useStore=create<State>()(persist((set,get)=>({
  addPractical:(subject,text)=>{if(text.trim())set(s=>({practicalItems:[...s.practicalItems,{id:id(),subject,text:text.trim()}]}))},
  editPractical:(itemId,text)=>set(s=>({practicalItems:s.practicalItems.map(x=>x.id===itemId?{...x,text}:x)})),deletePractical:itemId=>set(s=>({practicalItems:s.practicalItems.filter(x=>x.id!==itemId)})),
  addMock:m=>set(s=>({mockPracticals:[{...m,id:id()},...s.mockPracticals]})),deleteMock:mockId=>set(s=>({mockPracticals:s.mockPracticals.filter(x=>x.id!==mockId)})),
-  finishSetup:finished=>{const state=get(),phases=derivePhases(state.settings.examDates),today=todayISO(),start=today>phases[1].start?today:phases[1].start,end=phases[1].end>=start?phases[1].end:addDays(start,14),known=new Set(state.chapters.map(c=>`${c.subject}:${c.name.trim().toLowerCase()}`)),unique=finished.filter(c=>!known.has(`${c.subject}:${c.name.trim().toLowerCase()}`));const created=scheduleBacklog(unique,start,end);set(s=>({chapters:[...s.chapters,...created],setupDone:true,setupDismissed:true}))},
+  finishSetup:(finished,pendingDraft)=>{const state=get(),phases=derivePhases(state.settings.examDates),today=todayISO(),start=today>phases[1].start?today:phases[1].start,end=phases[1].end>=start?phases[1].end:addDays(start,14),known=new Set(state.chapters.map(c=>`${c.subject}:${c.name.trim().toLowerCase()}`)),unique=finished.filter(c=>!known.has(`${c.subject}:${c.name.trim().toLowerCase()}`));const created=scheduleBacklog(unique,start,end),completed=state.pending.filter(p=>p.doneOn),completedKeys=new Set(completed.map(p=>pendingTopicKey(p.subject,p.name))),active=pendingDraft.filter(p=>!completedKeys.has(pendingTopicKey(p.subject,p.name)));set(s=>({chapters:[...s.chapters,...created],pending:[...completed,...active],setupDone:true,setupDismissed:true}))},
   skipSetup:()=>set({setupDismissed:true}),
   exportAll:()=>{const {chapters,errors,days,reviews,milestonesDone,settings,scores,pending,papers,practicalChecks,practicalItems,mockPracticals,sessions,setupDone,setupDismissed}=get();return JSON.stringify({chapters,errors,days,reviews,milestonesDone,settings,scores,pending,papers,practicalChecks,practicalItems,mockPracticals,sessions,setupDone,setupDismissed},null,2)},
  importAll:json=>{const d=JSON.parse(json) as Partial<State>,base=initial();set({
