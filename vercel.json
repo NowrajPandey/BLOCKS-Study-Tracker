@@ -4,7 +4,6 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/blocks-study-tracker run build",
   "outputDirectory": "artifacts/blocks-study-tracker/dist/public",
-  "cleanUrls": true,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
