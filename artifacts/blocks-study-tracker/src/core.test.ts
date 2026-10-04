@@ -3,7 +3,6 @@ import {addDays,buildRevisions,completeRevisionOn,getDueItems} from './dates';
 import {derivePhases} from './phases';
 import {scheduleBacklog} from './backlog';
 import {behindFlags} from './flags';
-import {DEFAULT_BUFFER_DAYS,DEFAULT_ESTIMATED_DAYS,inferPendingTopics,normalizePendingTopics,replanPendingTopic} from './setup-pending';
 import type {Chapter,ExamDates,PendingTopic} from './types';
 
 const exam:ExamDates={practicals:'2026-11-15',preBoards:'2026-12-01',boards:'2027-02-15',confirmed:{practicals:false,preBoards:false,boards:false}};
@@ -26,12 +25,8 @@ describe('derived phases and backlog',()=>{
 });
 
 describe('behind schedule flags',()=>{
- it('asks for a revised plan instead of shaming an expired learning target',()=>{const pending:PendingTopic[]=[{id:'late',subject:'maths',name:'ITF',due:'2026-10-11'}];const flags=behindFlags({pending,scores:[],days:{},chapters:[],today:'2026-10-12'});expect(flags[0]).toMatchObject({severity:'amber',id:'late-late',text:'MATHS: "ITF" needs a revised learning plan. Its target was 2026-10-11; adjust its study estimate or surplus in setup.'})});
- it('shows the learn-by target with the planned study time and surplus',()=>{const pending:PendingTopic[]=[{id:'soon',subject:'maths',name:'Application of Integrals',due:'2026-10-11',plannedStart:'2026-10-04',estimatedDays:5,bufferDays:2}];const flags=behindFlags({pending,scores:[],days:{},chapters:[],today:'2026-10-10'});expect(flags[0]).toMatchObject({severity:'amber',id:'soon-soon',text:'MATHS: "Application of Integrals" has a planned learn-by target tomorrow (5 study days + 2 surplus).'})});
-});
-
-describe('learning-time estimates and surplus',()=>{
- it('moves legacy active topics onto the editable 4-day estimate plus 2-day buffer',()=>{const [topic]=normalizePendingTopics([{id:'legacy',subject:'maths',name:'Application of Integrals',due:'2026-10-05'}],'2026-10-04');expect(topic).toMatchObject({plannedStart:'2026-10-04',estimatedDays:DEFAULT_ESTIMATED_DAYS,bufferDays:DEFAULT_BUFFER_DAYS,due:'2026-10-10'})});
- it('recomputes the learn-by date from a user estimate and surplus',()=>{const [topic]=normalizePendingTopics([{id:'new',subject:'maths',name:'Integrals',due:'2026-10-04'}],'2026-10-04');expect(replanPendingTopic(topic,{estimatedDays:4,bufferDays:3})).toMatchObject({estimatedDays:4,bufferDays:3,due:'2026-10-11'})});
- it('spreads planned starts across the available learning window',()=>{const drafts=[0,1,2].map(i=>({subject:'maths' as const,name:`Topic ${i}`,finished:false,key:`m-${i}`}));expect(inferPendingTopics(drafts,'2026-10-04','2026-10-06').map(topic=>[topic.plannedStart,topic.due])).toEqual([['2026-10-04','2026-10-10'],['2026-10-05','2026-10-11'],['2026-10-06','2026-10-12']])});
+ it('asks the user to adjust dates instead of shaming an expired learning target',()=>{const pending:(PendingTopic&{due:string})[]=[{id:'late',subject:'maths',name:'ITF',due:'2026-10-11'}];const flags=behindFlags({pending,scores:[],days:{},chapters:[],today:'2026-10-12'});expect(flags[0]).toMatchObject({severity:'amber',id:'late-late',text:'MATHS: "ITF" is past its learn-by target 2026-10-11. Adjust its dates on Today, or mark it learned.'})});
+ it('shows the learn-by target when it lands within two days',()=>{const pending:(PendingTopic&{due:string})[]=[{id:'soon',subject:'maths',name:'Application of Integrals',due:'2026-10-11'}];const flags=behindFlags({pending,scores:[],days:{},chapters:[],today:'2026-10-10'});expect(flags[0]).toMatchObject({severity:'amber',id:'soon-soon',text:'MATHS: "Application of Integrals" has a learn-by target tomorrow.'})});
+ it('flags a revision queue that needs more than two days to clear',()=>{const chapters=Array.from({length:7},(_,i)=>chapter(`C${i}`,[{pass:'R1',dueOn:'2026-10-01'}]));const flags=behindFlags({pending:[],scores:[],days:{},chapters,today:'2026-10-06'});expect(flags.find(flag=>flag.id==='overdue')).toMatchObject({severity:'amber',text:expect.stringContaining('clears in 3 days')})});
+ it('stays quiet while the revision queue clears within two days',()=>{const chapters=Array.from({length:4},(_,i)=>chapter(`C${i}`,[{pass:'R1',dueOn:'2026-10-05'}]));const flags=behindFlags({pending:[],scores:[],days:{},chapters,today:'2026-10-06'});expect(flags.find(flag=>flag.id==='overdue')).toBeUndefined()});
 });

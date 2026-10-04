@@ -3,17 +3,18 @@ export const SUBJECTS:Record<SubjectId,{label:string;color:string}>={
  maths:{label:'MATHS',color:'var(--maths)'},physics:{label:'PHYSICS',color:'var(--physics)'},chemistry:{label:'CHEMISTRY',color:'var(--chemistry)'},biology:{label:'BIOLOGY',color:'var(--biology)'},english:{label:'ENGLISH',color:'var(--english)'}
 };
 export const SUBJECT_ORDER:SubjectId[]=['maths','physics','chemistry','biology','english'];
+export const CORE_SUBJECTS:SubjectId[]=['physics','chemistry','maths','biology'];
 export const SUBJECT_WEIGHT={maths:1,physics:.9,chemistry:.5,biology:.3,english:.3};
 export const BLOCK_TIMES:Record<BlockId,{weekday:string;length:string}>={A:{weekday:'Before school · about 5:30',length:'75 min'},B:{weekday:'After rest · about 2:30',length:'2 h'},C:{weekday:'Evening · about 6:30',length:'75 min'}};
 export interface BlockPlan {subject:SubjectId|'mixed'|'flex'|'test';focus:string}
 export const WEEK_TEMPLATE:Record<number,Record<BlockId,BlockPlan>>={
 1:{A:{subject:'maths',focus:'New topic or practice'},B:{subject:'physics',focus:'New chapter + numericals'},C:{subject:'chemistry',focus:'Revision queue'}},
-2:{A:{subject:'maths',focus:'New topic or practice'},B:{subject:'chemistry',focus:'Numericals + organic'},C:{subject:'english',focus:'Literature + language'}},
+ 2:{A:{subject:'maths',focus:'New topic or practice'},B:{subject:'chemistry',focus:'Numericals + organic'},C:{subject:'biology',focus:'Diagrams + active recall'}},
 3:{A:{subject:'maths',focus:'New topic or practice'},B:{subject:'physics',focus:'New chapter + numericals'},C:{subject:'biology',focus:'Revision queue'}},
 4:{A:{subject:'maths',focus:'New topic or practice'},B:{subject:'mixed',focus:'Chemistry 1 h + Biology 1 h'},C:{subject:'physics',focus:'Derivations + old chapters'}},
 5:{A:{subject:'maths',focus:'New topic or practice'},B:{subject:'physics',focus:'PYQs + numericals'},C:{subject:'flex',focus:'FLEX: whatever is behind or due. Your buffer.'}},
 6:{A:{subject:'maths',focus:'2.5 h: practice + PYQs'},B:{subject:'physics',focus:'2 h: PYQs'},C:{subject:'mixed',focus:'Chem + Bio 2 h. Clear the R3s.'}},
-0:{A:{subject:'test',focus:'Timed test, 3 h'},B:{subject:'mixed',focus:'Error analysis + fixes'},C:{subject:'mixed',focus:'Weekly review + English. Afternoon off.'}}
+ 0:{A:{subject:'test',focus:'Timed test, 3 h'},B:{subject:'mixed',focus:'Error analysis + fixes'},C:{subject:'english',focus:'Weekly review + English. Afternoon off.'}}
 };
 export const PHASES=[
 {id:0,name:'Setup',job:'Confirm exam dates. Add every finished chapter to the tracker.'},
@@ -39,11 +40,7 @@ maths:[['Relations and Functions',true],['Matrices and Determinants',true],['Con
 biology:[['Reproduction in Organisms',true],['Sexual Reproduction in Flowering Plants',true],['Human Reproduction and Reproductive Health',true],['Principles of Inheritance and Variation (genetics, linkage, crossing over, disorders)',true],['Molecular Basis of Inheritance',true],['Evolution',true],['Human Health and Disease',false],['Biotechnology',false],['Ecology',false]].map(([name,finished])=>({name:String(name),finished:Boolean(finished)})),
 english:[['Literature: Macbeth Acts 1-4',true],['Literature: Short stories',true],['Literature: Poems',true],['Language: Composition (essay, letter, notice)',true],['Language: Grammar and comprehension',true]].map(([name,finished])=>({name:String(name),finished:Boolean(finished)}))
 };
-export const SEED_PENDING=[
-{id:'p-maths-itf',subject:'maths' as const,name:'Inverse Trigonometric Functions (ITF)',due:'2026-10-11'},
-{id:'p-maths-defint',subject:'maths' as const,name:'Definite Integrals',due:'2026-10-11'},
-{id:'p-eng-macbeth5',subject:'english' as const,name:'Literature: Macbeth Act 5',due:'2026-10-11'}
-];
+export const LEGACY_SEED_PENDING_IDS=['p-maths-itf','p-maths-defint','p-eng-macbeth5'];
 export const SEED_SCORES:Omit<ScoreEntry,'id'>[]=[
 {label:'Unit test',subject:'chemistry',type:'unit',obtained:20,total:20},
 {label:'Unit test',subject:'biology',type:'unit',obtained:20,total:20},

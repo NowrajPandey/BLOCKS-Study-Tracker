@@ -3,12 +3,16 @@ import {NavLink,Navigate,Route,Routes,useNavigate} from 'react-router-dom';
 import {BookOpen,CalendarDays,ChartNoAxesCombined,ClipboardList,House,Settings as SettingsIcon} from 'lucide-react';
 import {FocusTimer} from '@/components/FocusTimer';
 import {SetupWizard} from '@/components/SetupWizard';
+import {UpdateBanner} from '@/components/UpdateBanner';
+import {InstallBanner} from '@/components/InstallBanner';
 import {useStore} from '@/store';
 import {ChaptersPage} from '@/pages/ChaptersPage';
 import {ErrorsPage} from '@/pages/ErrorsPage';
 import {PlanPage} from '@/pages/PlanPage';
 import {ReviewPage} from '@/pages/ReviewPage';
 import {SettingsPage} from '@/pages/SettingsPage';
+import {SequencePage} from '@/pages/SequencePage';
+import {SubmissionsPage} from '@/pages/SubmissionsPage';
 import {TodayPage} from '@/pages/TodayPage';
 
 const navItems=[
@@ -42,6 +46,8 @@ function AppShell(){
      <Route path="/errors" element={<ErrorsPage/>}/>
      <Route path="/review" element={<ReviewPage/>}/>
      <Route path="/settings" element={<SettingsPage openSetup={openSetup}/>}/>
+     <Route path="/sequence" element={<SequencePage/>}/>
+     <Route path="/submissions" element={<SubmissionsPage/>}/>
      <Route path="*" element={<Navigate to="/today" replace/>}/>
     </Routes>
    </div>
@@ -50,6 +56,8 @@ function AppShell(){
    {navItems.map(({label,path,Icon})=><NavLink key={path} to={path} className={({isActive})=>`flex min-h-[58px] flex-col items-center justify-center gap-1 border-[3px] border-black text-[10px] font-bold uppercase ${isActive?'is-done bg-[var(--due)]':'bg-white'}`} data-testid={`nav-${label.toLowerCase()}-mobile`}><Icon size={20} strokeWidth={3}/>{label}</NavLink>)}
   </nav>
   {showSetup&&<SetupWizard close={()=>setShowSetup(false)}/>}
+  <UpdateBanner/>
+  <InstallBanner/>
   {timer!==null&&<FocusTimer key={timer} initial={timer} close={()=>setTimer(null)}/>}
  </div>
 }
