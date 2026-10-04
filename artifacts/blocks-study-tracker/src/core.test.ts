@@ -23,4 +23,5 @@ describe('derived phases and backlog',()=>{
 
 describe('behind schedule flags',()=>{
  it('marks overdue pending topics as a red flag',()=>{const pending:PendingTopic[]=[{id:'late',subject:'maths',name:'ITF',due:'2026-10-11'}];const flags=behindFlags({pending,scores:[],days:{},chapters:[],today:'2026-10-12'});expect(flags[0]).toMatchObject({severity:'red',id:'late-late'})});
+ it('labels a pending topic deadline tomorrow as a learn-by deadline',()=>{const pending:PendingTopic[]=[{id:'soon',subject:'maths',name:'Application of Integrals',due:'2026-10-11'}];const flags=behindFlags({pending,scores:[],days:{},chapters:[],today:'2026-10-10'});expect(flags[0]).toMatchObject({severity:'amber',id:'soon-soon',text:'MATHS: "Application of Integrals" has a learn-by deadline tomorrow.'})});
 });
