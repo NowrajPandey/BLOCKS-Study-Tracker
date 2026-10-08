@@ -6,6 +6,7 @@ import {DEFAULT_EXAM_DATES,derivePhases} from './phases';
 import {PRACTICAL_STARTER,SEED_SCORES} from './seed';
 import {pendingTopicKey,purgeLegacySeedPending} from './setup-pending';
 import {applyPendingOverride,clearPendingOverride,paceBacklog} from './pacing';
+import {revertLearned} from './revert';
 import {DEFAULT_HARDNESS} from './priority';
 import {moveName} from './sequence';
 import type {BlockId,Chapter,DayLog,ErrorEntry,ErrorReason,ExamDates,MockPractical,PaperSlot,Pass,PendingTopic,PracticalItem,RecallResult,SchoolSync,ScoreEntry,Settings,StudyMethod,StudySession,SubjectId,Submission,WeeklyReview} from './types';
@@ -19,7 +20,7 @@ type State={
  saveReview:(r:WeeklyReview)=>void;toggleMilestone:(key:string)=>void;setExamDate:(key:ExamDatesConfirmed,date:string,confirmed:boolean)=>void;setExamDates:(d:ExamDates)=>void;
   toggleSchoolDone:(subject:SubjectId,name:string)=>void;setSchoolExpected:(subject:SubjectId,date:string)=>void;setHardness:(subject:SubjectId,value:number)=>void;
   moveManualItem:(subject:SubjectId,name:string,toIndex:number)=>void;clearManualOrder:(subject:SubjectId)=>void;
-   addScore:(s:Omit<ScoreEntry,'id'>)=>void;deleteScore:(id:string)=>void;markPendingLearned:(id:string)=>void;setPendingOverride:(id:string,patch:{plannedStart:string;estimatedDays:number})=>void;clearPendingOverride:(id:string)=>void;deletePending:(id:string)=>void;addPending:(x:Omit<PendingTopic,'id'|'doneOn'>)=>void;
+   addScore:(s:Omit<ScoreEntry,'id'>)=>void;deleteScore:(id:string)=>void;markPendingLearned:(id:string)=>void;unmarkPendingLearned:(id:string)=>void;setPendingOverride:(id:string,patch:{plannedStart:string;estimatedDays:number})=>void;clearPendingOverride:(id:string)=>void;deletePending:(id:string)=>void;addPending:(x:Omit<PendingTopic,'id'|'doneOn'>)=>void;
   addPaper:(p:Omit<PaperSlot,'id'>)=>void;removePaper:(id:string)=>void;addSubmission:(x:Omit<Submission,'id'>)=>void;editSubmission:(id:string,patch:Partial<Omit<Submission,'id'>>)=>void;deleteSubmission:(id:string)=>void;completeSubmission:(id:string)=>void;reopenSubmission:(id:string)=>void;togglePractical:(key:string)=>void;addPractical:(subject:SubjectId,text:string)=>void;editPractical:(id:string,text:string)=>void;deletePractical:(id:string)=>void;addMock:(m:Omit<MockPractical,'id'>)=>void;deleteMock:(id:string)=>void;
    finishSetup:(finished:{subject:SubjectId;name:string}[],pendingDraft:PendingTopic[])=>void;skipSetup:()=>void;exportAll:()=>string;importAll:(json:string)=>void;resetAll:()=>void;
 };
@@ -56,6 +57,7 @@ export const useStore=create<State>()(persist((set,get)=>({
   clearManualOrder:subject=>set(s=>{const next={...s.manualOrder};delete next[subject];return{manualOrder:next}}),
  addScore:score=>set(s=>({scores:[{...score,id:id()},...s.scores]})),deleteScore:scoreId=>set(s=>({scores:s.scores.filter(x=>x.id!==scoreId)})),
     markPendingLearned:pendingId=>{const state=get(),topic=state.pending.find(p=>p.id===pendingId);if(!topic||topic.doneOn)return;const learnedOn=todayISO(),target=paceBacklog(state.pending,{today:learnedOn,deadline:state.settings.examDates.preBoards,school:state.schoolSync,hardness:state.settings.hardness,order:state.manualOrder}).find(p=>p.id===pendingId)?.due,existing=state.chapters.find(c=>c.subject===topic.subject&&c.name.trim().toLowerCase()===topic.name.trim().toLowerCase());if(existing)get().editChapter(existing.id,{learnedOn});else get().addChapter(topic.subject,topic.name,learnedOn);set(s=>({pending:s.pending.map(p=>p.id===pendingId?{...p,doneOn:learnedOn,...(target&&!p.due?{due:target}:{})}:p)}))},
+  unmarkPendingLearned:pendingId=>set(s=>revertLearned(s.pending,s.chapters,pendingId)),
   setPendingOverride:(pendingId,patch)=>set(s=>({pending:s.pending.map(p=>p.id===pendingId?applyPendingOverride(p,patch):p)})),
    clearPendingOverride:pendingId=>set(s=>({pending:s.pending.map(p=>p.id===pendingId?clearPendingOverride(p):p)})),
    deletePending:pendingId=>set(s=>{
